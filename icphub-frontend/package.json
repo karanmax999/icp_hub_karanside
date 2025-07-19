@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@dfinity/agent": "^2.4.1",
+    "@dfinity/auth-client": "^3.0.0",
     "@dfinity/candid": "^2.4.1",
     "next": "15.4.1",
     "react": "19.1.0",

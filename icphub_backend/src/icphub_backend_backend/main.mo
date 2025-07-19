@@ -46,7 +46,7 @@ actor {
       createdAt = now;
       updatedAt = now;
       files = [];
-      commits = []; // Added
+      commits = [];
     };
 
     repositories := Array.append(repositories, [newRepo]);
@@ -289,7 +289,10 @@ actor {
     return [];
   };
 
-  public shared query ({ caller }) func getCommit(repositoryId: Text, commitId: Text) : async ?Types.Commit {
+  public shared query ({ caller }) func getCommit(
+    repositoryId: Text, 
+    commitId: Text
+  ) : async ?Types.Commit {
     for (repo in repositories.vals()) {
       if (repo.id == repositoryId and (not repo.isPrivate or isAuthorized(caller, repo))) {
         for (commit in repo.commits.vals()) {
@@ -301,6 +304,31 @@ actor {
     };
     return null;
   };
+
+  // ✅ NEW: Retrieve file content from any commit snapshot
+  public shared query ({ caller }) func getCommitFileContent(
+    repositoryId: Text,
+    commitId: Text,
+    filePath: Text
+  ) : async ?Types.FileEntry {
+    for (repo in repositories.vals()) {
+      if (repo.id == repositoryId and (not repo.isPrivate or isAuthorized(caller, repo))) {
+        for (commit in repo.commits.vals()) {
+          if (commit.id == commitId) {
+            for (file in commit.files.vals()) {
+              if (file.path == filePath) {
+                return ?file;
+              };
+            };
+            return null; // File not found in commit
+          };
+        };
+        return null; // Commit not found
+      };
+    };
+    return null; // Repo not found or unauthorized
+  };
+
   // 🔍 Get repositories owned by caller
   public shared query ({ caller }) func getUserRepositories() : async [Types.Repository] {
     Array.filter<Types.Repository>(
