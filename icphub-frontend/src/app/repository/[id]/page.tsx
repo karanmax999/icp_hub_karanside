@@ -1,14 +1,15 @@
-"use client";
+'use client';
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { HttpAgent, Actor } from "@dfinity/agent";
+import { Actor, HttpAgent } from "@dfinity/agent";
 import { idlFactory, canisterId } from "@/declarations/icphub_backend_backend";
+import { AuthClient } from "@dfinity/auth-client";
 
-// Types 
+// Types
 type FileEntry = {
   path: string;
-  content: Uint8Array;
+  content: number[];
   hash: string;
   lastModified: bigint;
 };
@@ -21,29 +22,32 @@ type Commit = {
 };
 
 export default function RepositoryDetailPage() {
-  const { id } = useParams();
+  const params = useParams();
+  const id = params?.id as string;
 
-  // Backend state
   const [backend, setBackend] = useState<any>(null);
-
-  // Repo files (current state)
   const [files, setFiles] = useState<FileEntry[]>([]);
   const [loadingFiles, setLoadingFiles] = useState(true);
 
-  // Commit history + per-commit files
   const [commits, setCommits] = useState<Commit[]>([]);
   const [selectedCommit, setSelectedCommit] = useState<Commit | null>(null);
   const [commitFiles, setCommitFiles] = useState<FileEntry[]>([]);
 
-  // Upload and commit messaging UI
   const [fileToUpload, setFileToUpload] = useState<File | null>(null);
   const [commitMessage, setCommitMessage] = useState("");
 
-  // Init backend actor
+  // ✅ Authenticated backend actor
   useEffect(() => {
     const init = async () => {
       try {
-        const agent = new HttpAgent({ host: "http://127.0.0.1:4943" });
+        const authClient = await AuthClient.create();
+        const identity = authClient.getIdentity();
+
+        const agent = new HttpAgent({
+          identity,
+          host: "http://127.0.0.1:4943", // local dev
+        });
+
         if (process.env.NODE_ENV === "development") {
           await agent.fetchRootKey();
         }
@@ -62,7 +66,6 @@ export default function RepositoryDetailPage() {
     init();
   }, []);
 
-  // Fetch current files + commits once backend ready and repo id is known
   useEffect(() => {
     if (backend && id) {
       fetchFiles();
@@ -70,12 +73,11 @@ export default function RepositoryDetailPage() {
     }
   }, [backend, id]);
 
-  // Fetch current repo files (latest state)
   const fetchFiles = async () => {
     setLoadingFiles(true);
     try {
-      const result = await backend.listFiles(id as string);
-      setFiles(result as FileEntry[]);
+      const result = await backend.listFiles(id);
+      setFiles(result);
     } catch (err) {
       console.error("Failed to fetch files:", err);
       setFiles([]);
@@ -83,12 +85,10 @@ export default function RepositoryDetailPage() {
     setLoadingFiles(false);
   };
 
-  // Fetch commit history
   const fetchCommits = async () => {
     try {
-      const result = await backend.listCommits(id as string);
-      setCommits(result as Commit[]);
-      // optionally clear selection
+      const result = await backend.listCommits(id);
+      setCommits(result);
       setSelectedCommit(null);
       setCommitFiles([]);
     } catch (err) {
@@ -97,15 +97,14 @@ export default function RepositoryDetailPage() {
     }
   };
 
-  // Upload new file
   const handleUpload = async () => {
     if (!fileToUpload || !backend) return;
 
     const buffer = await fileToUpload.arrayBuffer();
-    const blob = Array.from(new Uint8Array(buffer)); // convert to Array<number>
+    const blob = Array.from(new Uint8Array(buffer));
 
     try {
-      await backend.uploadFile(id as string, fileToUpload.name, blob);
+      await backend.uploadFile(id, fileToUpload.name, blob);
       alert("✅ Upload complete");
       setFileToUpload(null);
       await fetchFiles();
@@ -115,14 +114,13 @@ export default function RepositoryDetailPage() {
     }
   };
 
-  // Delete file from current repo state
   const handleDelete = async (filePath: string) => {
     if (!backend) return;
     const confirmDelete = confirm(`Delete "${filePath}"?`);
     if (!confirmDelete) return;
 
     try {
-      await backend.deleteFile(id as string, filePath);
+      await backend.deleteFile(id, filePath);
       alert("🗑️ File deleted");
       await fetchFiles();
     } catch (err) {
@@ -131,17 +129,17 @@ export default function RepositoryDetailPage() {
     }
   };
 
-  // Download current repo file
   const handleDownload = async (filePath: string) => {
     if (!backend) return;
 
     try {
-      const file = (await backend.getFile(id as string, filePath)) as FileEntry | null;
+      const file = await backend.getFile(id, filePath);
       if (!file) return alert("File not found");
 
       const blob = new Blob([new Uint8Array(file.content)], {
         type: "application/octet-stream",
       });
+
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -154,13 +152,12 @@ export default function RepositoryDetailPage() {
     }
   };
 
-  // Commit current files with message
   const handleCommit = async () => {
     if (!backend) return;
     if (!commitMessage.trim()) return alert("Please enter a commit message.");
 
     try {
-      const result = await backend.commitChanges(id as string, commitMessage.trim());
+      const result = await backend.commitChanges(id, commitMessage.trim());
       alert(result);
       setCommitMessage("");
       await fetchCommits();
@@ -170,22 +167,9 @@ export default function RepositoryDetailPage() {
     }
   };
 
-  // Select commit, show files for that commit snapshot
   const selectCommit = async (commit: Commit) => {
     setSelectedCommit(commit);
-
-    // Option 1: Use commit.files directly (snapshot)
     setCommitFiles(commit.files);
-
-    // Option 2: Uncomment below if you prefer to fetch each file content on demand
-    /*
-    const fetchedFiles: FileEntry[] = [];
-    for (const file of commit.files) {
-      const f = await backend.getCommitFileContent(id as string, commit.id, file.path);
-      if (f) fetchedFiles.push(f);
-    }
-    setCommitFiles(fetchedFiles);
-    */
   };
 
   const getFileIcon = (path: string) => {
@@ -210,7 +194,9 @@ export default function RepositoryDetailPage() {
         <button
           onClick={handleUpload}
           disabled={!fileToUpload}
-          className={`px-6 py-2 rounded font-semibold ${fileToUpload ? "bg-green-600 hover:bg-green-700" : "bg-gray-700 cursor-not-allowed"}`}
+          className={`px-6 py-2 rounded font-semibold ${
+            fileToUpload ? "bg-green-600 hover:bg-green-700" : "bg-gray-700 cursor-not-allowed"
+          }`}
         >
           Upload
         </button>
@@ -218,7 +204,7 @@ export default function RepositoryDetailPage() {
 
       {/* File List */}
       <section className="mb-12">
-        <h2 className="text-2xl font-semibold mb-4">Files (Current State):</h2>
+        <h2 className="text-2xl font-semibold mb-4">Files (Current State)</h2>
         {loadingFiles ? (
           <p className="text-gray-400">Loading files…</p>
         ) : files.length === 0 ? (
@@ -280,7 +266,7 @@ export default function RepositoryDetailPage() {
         </div>
       </section>
 
-      {/* Commit History + File Browser */}
+      {/* Commit History */}
       <section>
         <h2 className="text-2xl font-semibold mb-4">Commit History</h2>
         {commits.length === 0 ? (
@@ -307,7 +293,9 @@ export default function RepositoryDetailPage() {
 
         {selectedCommit && (
           <div className="mt-8 max-w-4xl">
-            <h3 className="text-xl font-semibold mb-3">Files in Commit: {selectedCommit.message}</h3>
+            <h3 className="text-xl font-semibold mb-3">
+              Files in Commit: {selectedCommit.message}
+            </h3>
             {commitFiles.length === 0 ? (
               <p className="text-gray-400 italic">No files in this commit.</p>
             ) : (
@@ -319,10 +307,15 @@ export default function RepositoryDetailPage() {
                       onClick={async () => {
                         if (!backend) return alert("Backend not ready");
                         try {
-                          // Get the file content from commit snapshot (in case you want up-to-date)
-                          const f = await backend.getCommitFileContent(id as string, selectedCommit.id, file.path);
+                          const f = await backend.getCommitFileContent(
+                            id,
+                            selectedCommit.id,
+                            file.path
+                          );
                           if (!f) return alert("File not found in commit");
-                          const blob = new Blob([new Uint8Array(f.content)], { type: "application/octet-stream" });
+                          const blob = new Blob([new Uint8Array(f.content)], {
+                            type: "application/octet-stream",
+                          });
                           const url = URL.createObjectURL(blob);
                           const a = document.createElement("a");
                           a.href = url;
@@ -330,7 +323,7 @@ export default function RepositoryDetailPage() {
                           a.click();
                           URL.revokeObjectURL(url);
                         } catch (e) {
-                          alert("Error downloading file from commit");
+                          alert("❌ Error downloading commit file");
                         }
                       }}
                       className="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-white"

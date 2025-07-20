@@ -1,8 +1,4 @@
-import Principal "mo:base/Principal";
-import Blob "mo:base/Blob";
-
 module {
-
   public type FileEntry = {
     path: Text;
     content: Blob;
@@ -17,6 +13,21 @@ module {
     files: [FileEntry];
   };
 
+  public type Branch = {
+    name: Text;
+    commits: [Commit];
+  };
+
+  public type ChainMetadata = {
+    ethTx: ?Text;
+    btcTx: ?Text;
+  };
+
+  public type CommitMetadata = {
+    commitId: Text;
+    chain: ChainMetadata;
+  };
+
   public type Repository = {
     id: Text;
     name: Text;
@@ -27,7 +38,26 @@ module {
     createdAt: Int;
     updatedAt: Int;
     files: [FileEntry];
-    commits: [Commit];  // Add this field
+    commits: [Commit]; // legacy fallback
+    branches: [Branch];
+    currentBranch: Text;
+    chainMetadata: [CommitMetadata];
+  };
+
+  public type Contribution = {
+    contributor: Principal;
+    repoId: Text;
+    commitId: Text;
+    timestamp: Int;
+  };
+
+  public type Proposal = {
+    id: Nat;
+    repositoryId: Text;
+    proposer: Principal;
+    message: Text;
+    timestamp: Int;
+    approved: Bool;
   };
 
   public type User = {

@@ -1,0 +1,80 @@
+type Repository = 
+ record {
+   branches: vec Branch;
+   chainMetadata: vec CommitMetadata;
+   collaborators: vec principal;
+   commits: vec Commit;
+   createdAt: int;
+   currentBranch: text;
+   description: opt text;
+   files: vec FileEntry;
+   id: text;
+   isPrivate: bool;
+   name: text;
+   owner: principal;
+   updatedAt: int;
+ };
+type Proposal = 
+ record {
+   approved: bool;
+   id: nat;
+   message: text;
+   proposer: principal;
+   repositoryId: text;
+   timestamp: int;
+ };
+type FileEntry = 
+ record {
+   content: blob;
+   hash: text;
+   lastModified: int;
+   path: text;
+ };
+type CommitMetadata = 
+ record {
+   chain: ChainMetadata;
+   commitId: text;
+ };
+type Commit = 
+ record {
+   files: vec FileEntry;
+   id: text;
+   message: text;
+   timestamp: int;
+ };
+type ChainMetadata = 
+ record {
+   btcTx: opt text;
+   ethTx: opt text;
+ };
+type Branch = 
+ record {
+   commits: vec Commit;
+   name: text;
+ };
+service : {
+  addCollaborator: (repositoryId: text, newCollaborator: principal) -> (text);
+  commitChanges: (repositoryId: text, message: text) -> (text);
+  createBranch: (repositoryId: text, newBranchName: text, fromBranchName:
+   text) -> (text);
+  createProposal: (repositoryId: text, message: text) -> (nat);
+  createRepository: (name: text, description: opt text, isPrivate: bool) ->
+   (text);
+  deleteFile: (repositoryId: text, path: text) -> (text);
+  deleteRepository: (id: text) -> (text);
+  getCollaboratorRepositories: () -> (vec Repository) query;
+  getCommit: (repositoryId: text, commitId: text) -> (opt Commit) query;
+  getCommitFileContent: (repositoryId: text, commitId: text, filePath:
+   text) -> (opt FileEntry) query;
+  getCurrentBranch: (repositoryId: text) -> (opt text) query;
+  getFile: (repositoryId: text, path: text) -> (opt FileEntry) query;
+  getRepository: (id: text) -> (opt Repository) query;
+  getUserRepositories: () -> (vec Repository) query;
+  hello: (name: text) -> (text) query;
+  listBranches: (repositoryId: text) -> (vec text) query;
+  listCommits: (repositoryId: text) -> (vec Commit) query;
+  listFiles: (repositoryId: text) -> (vec text) query;
+  listProposals: () -> (vec Proposal) query;
+  switchBranch: (repositoryId: text, newBranchName: text) -> (text);
+  uploadFile: (repositoryId: text, path: text, content: blob) -> (text);
+}

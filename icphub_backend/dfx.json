@@ -1,16 +1,24 @@
 {
+  "version": 1,
   "canisters": {
     "icphub_backend_backend": {
       "main": "src/icphub_backend_backend/main.mo",
-      "type": "motoko"
+      "type": "motoko",
+      "frontend": {
+        "bindings": "ts"
+      }
+    },
+    "internet_identity": {
+      "type": "custom",
+      "candid": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity.did",
+      "wasm": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity_dev.wasm.gz"
     }
   },
   "defaults": {
     "build": {
-      "args": "",
-      "packtool": ""
+      "packtool": "",
+      "args": ""
     }
   },
-  "output_env_file": ".env",
-  "version": 1
+  "output_env_file": ".env"
 }
