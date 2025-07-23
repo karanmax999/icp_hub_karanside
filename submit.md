@@ -1,29 +1,62 @@
-# 🚀 ICPHub Hackathon Submission
+Details:
+- ✅ Project Name: CommitChain
+- 🔗 Repo: https://github.com/karanmax999/icp_hub_karanside
+- 👥 Team: Rajesh Soni (Raazz), Karan, Arya, Amitosh
+- 🎯 Goal: Decentralized GitHub-like platform using ICP, Ethereum, Bitcoin, Chain Fusion
+- 🧰 Tech Stack: Next.js, Tailwind, Express, Solidity, Motoko, IPFS, Internet Identity, WalletConnect
+- 🛠 Key Features:
+  - DAO voting + proposals
+  - Multi-chain token display
+  - Smart contract deployer
+  - IPFS-based storage
+  - Git-style repo explorer
+- 📝 Status: MVP done, frontend/backend integrated, CID/IPFS pending
+- 💡 Next: Launch DAO proposals, public explorer, grant application
 
-**Team:** Nutrazz + Collaborators  
-**Repo:** [icp_hub_karanside](https://github.com/karanmax999/icp_hub_karanside)
+Output as markdown for submit.md. Include headers, emojis, clean formatting.
+EOF
+submit.md: command not found
+submit.md: command not found
+ # CommitChain - ICPHub Submission
 
-## ✅ Highlights
-- Multi-chain architecture (EVM + ICP via Chain Fusion)
-- Modular frontend & backend
-- DAO tools: governance, repo mgmt, token utility
-- IPFS file storage support
-- Ollama-powered AI automation
+## Project Name
+CommitChain
 
-## 📦 What's in the repo
-- `frontend/` – Next.js + EVM connection UI
-- `backend/` – Express.js + ICP logic
-- `contracts/` – Smart contracts
-- `auto-review.sh` & `auto-commit.sh` – Automated QA
+## Repository
+[GitHub](https://github.com/karanmax999/icp_hub_karanside)
 
-## 📝 Notes
-- Reviewed and tested with local LLM (Ollama Mistral)
-- Passed all linter & basic tests
+## Team Members
+- Rajesh Soni (Raazz)
+- Karan
+- Arya
+- Amitosh
 
-## 🌐 Live Demo / Video
-> Add link here if available
+## Project Goal
+Develop a decentralized GitHub-like platform leveraging ICP, Ethereum, 
+Bitcoin, and Chain Fusion.
 
-## 🧠 Powered by
-- Internet Computer (DFINITY)
-- Ollama + Mistral
-- GitHub CI/CD
+## Technology Stack
+- Frontend: Next.js, Tailwind CSS
+- Backend: Express.js
+- Smart Contracts: Solidity, Motoko
+- Integrations: WalletConnect, IPFS
+- Identity & Wallets: Internet Identity
+
+## Key Features (MVP)
+- DAO voting and proposals
+- Multi-chain token display
+- Smart contract deployer
+- IPFS-based storage
+- Git-style repository explorer
+
+## Current Status
+The MVP has been completed, frontend and backend have been integrated. 
+CID/IPFS integration is pending.
+
+## Future Plans
+- Launching DAO proposals
+- Developing a public explorer
+- Implementing grant application feature
+
+
+
